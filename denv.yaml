@@ -1,0 +1,9 @@
+version: v1
+environment: 
+  name: cocoon
+  definitions:
+    - service1
+    - service2
+  boot:
+    - service1
+    - service2
