@@ -1,0 +1,12 @@
+version: v1
+environment: 
+  name: cocoon
+  definitions:
+    - name: 'service1'
+      files:
+        - docker-compose.yml
+        - docker-compose.prod.yml
+    - name: 'service2'
+  boot:
+    - service1
+    - service2
