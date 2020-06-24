@@ -49,7 +49,12 @@ func main() {
 
 	flag.Parse()
 
-	switch os.Args[1] {
+	if len(os.Args) == 1 {
+		fmt.Println("Print HELP")
+		os.Exit(1)
+	}
+
+	switch os.Args[2] {
 	case "up":
 		if len(os.Args) < 3 {
 			fmt.Println("Expected service name.")

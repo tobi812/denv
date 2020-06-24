@@ -12,7 +12,10 @@ Denv is a tool that makes working with multiple docker-compose files simpler.
 ```
 go get -d ./...
 go install     
-go build 
 ```
 
-4. Run denv
+4. Compile and run denv
+```
+go build 
+denv
+```
