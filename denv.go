@@ -48,45 +48,13 @@ func main() {
 
 	switch os.Args[1] {
 	case "up":
-		denvFile := loadDenvFile("")
-		if len(os.Args) < 3 {
-			fmt.Println("Expected service name.")
-			os.Exit(1)
-		}
-
-		service, definitionError := getDefinition(os.Args[2], denvFile)
-		if definitionError != nil {
-			os.Exit(1)
-		}
-
-		args := []string{}
-
-		for _, file := range service.Files {
-			args = append(args, "-f")
-			args = append(args, file)
-		}
+		args := extractArgsFromDenvFile()
 		args = append(args, "up")
 		args = append(args, "-d")
 
 		execCommand("docker-compose", args...)
 	case "down":
-		denvFile := loadDenvFile("")
-		if len(os.Args) < 3 {
-			fmt.Println("Expected service name.")
-			os.Exit(1)
-		}
-
-		service, definitionError := getDefinition(os.Args[2], denvFile)
-		if definitionError != nil {
-			os.Exit(1)
-		}
-
-		args := []string{}
-
-		for _, file := range service.Files {
-			args = append(args, "-f")
-			args = append(args, file)
-		}
+		args := extractArgsFromDenvFile()
 		args = append(args, "down")
 
 		execCommand("docker-compose", args...)
@@ -205,4 +173,25 @@ func switchEnvironment(environment string) {
 
 	cfg.Section("current").Key("environment").SetValue(environment)
 	cfg.SaveTo("denv_config")
+}
+
+func extractArgsFromDenvFile() []string {
+	denvFile := loadDenvFile("")
+	if len(os.Args) < 3 {
+		fmt.Println("Expected service name.")
+		os.Exit(1)
+	}
+
+	service, definitionError := getDefinition(os.Args[2], denvFile)
+	if definitionError != nil {
+		os.Exit(1)
+	}
+
+	args := []string{}
+
+	for _, file := range service.Files {
+		args = append(args, "-f")
+		args = append(args, file)
+	}
+	return args
 }
