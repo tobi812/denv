@@ -15,9 +15,15 @@ import (
 	"gopkg.in/yaml.v2"
 )
 
+type Command struct {
+	Container string
+	Exec string
+}
+
 type Definition struct {
 	Name  string
 	Files []string
+	Commands []Command
 	path  string
 }
 
@@ -58,6 +64,16 @@ func main() {
 		args = append(args, "down")
 
 		execCommand("docker-compose", args...)
+
+		for _, command := range service.Commands {
+			containerArgs := []string{}
+			containerArgs = append(containerArgs, "exec")
+			containerArgs = append(containerArgs, command.Container)
+			containerArgs = append(containerArgs, command.Exec)
+
+			execCommand("docker", containerArgs...)
+		}
+
 	case "add":
 		addCmd.Parse(os.Args[2:])
 
@@ -90,8 +106,6 @@ func main() {
 		fmt.Println("Unknown command.")
 		os.Exit(1)
 	}
-	// fmt.Printf("--- t:\n%v\n\n", denvFile)
-	// fmt.Println("Name: " + denvFile.Environment.Name)
 }
 
 func execCommand(name string, args ...string) {
@@ -101,6 +115,7 @@ func execCommand(name string, args ...string) {
 	cmd.Stderr = &stderr
 	err := cmd.Run()
 	outStr, errStr := string(stdout.Bytes()), string(stderr.Bytes())
+
 
 	if err != nil {
 		fmt.Printf(errStr)
