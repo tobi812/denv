@@ -36,6 +36,10 @@ func main() {
 	addCmd := flag.NewFlagSet("add", flag.ExitOnError)
 	denvPath := addCmd.String("path", "", "path to denv-file")
 
+	switchCmd := flag.NewFlagSet("switch", flag.ExitOnError)
+
+
+
 	if len(os.Args) == 1 {
 		man, error := ioutil.ReadFile("docs/man.txt")
 		if error != nil {
@@ -75,20 +79,29 @@ func main() {
 		addCmd.Parse(os.Args[2:])
 
 		denvFile := loadDenvFile(*denvPath)
+		cfg := loadConfig()
 
-		cfg, err := ini.Load("denv_config")
-		if err != nil {
-			fmt.Printf("Fail to read file: %v", err)
+		absolutePath := *denvPath
+		if *denvPath == "" {
+			path, err := os.Getwd()
+			if err != nil {
+				log.Println(err)
+			}
+			absolutePath = path
+		}
+
+		cfg.Section("environments").Key("denv." + denvFile.Environment.Name).SetValue(absolutePath)
+		cfg.SaveTo("denv_config")
+	case "switch":
+		switchCmd.Parse(os.Args[2:])
+
+		if len(os.Args) < 3 {
+			fmt.Println("Expected environment name.")
 			os.Exit(1)
 		}
 
-		path, err := os.Getwd()
-		if err != nil {
-			log.Println(err)
-		}
-
-		cfg.Section("environments").Key("denv." + denvFile.Environment.Name).SetValue(path)
-		cfg.SaveTo("denv_config")
+		environment := os.Args[2]
+		switchEnvironment(environment)
 
 	default:
 		fmt.Println("Unknown command.")
@@ -126,30 +139,65 @@ func getDefinition(name string, denvFile DenvFile) (Definition, error) {
 	return Definition{}, errors.New(errorMessage)
 }
 
+
+func loadConfig() *ini.File {
+	cfg, err := ini.Load("denv_config")
+	if err != nil {
+		fmt.Printf("Fail to read file: %v", err)
+		os.Exit(1)
+	}
+
+	return cfg
+}
+
 func loadDenvFile(path string) DenvFile {
 
 	if !strings.HasSuffix(path, "/") && path != "" {
 		path = path + "/"
 	}
 
-	file, error := os.Open(path + "denv.yaml")
-	if error != nil {
-		log.Fatal(error)
-		os.Exit(1)
+	file, error1 := os.Open(path + "denv.yaml")
+	if error1 != nil {
+		log.Fatal(error1)
 	}
 
 	defer file.Close()
 
-	data, error := ioutil.ReadAll(file)
-	if error != nil {
-		log.Fatal(error)
+	data, error2 := ioutil.ReadAll(file)
+	if error2 != nil {
+		log.Fatal(error2)
 	}
 
 	denvFile := DenvFile{}
-	error1 := yaml.Unmarshal([]byte(data), &denvFile)
-	if error1 != nil {
-		log.Fatalf("error: %v", error1)
+	error3 := yaml.Unmarshal([]byte(data), &denvFile)
+	if error3 != nil {
+		log.Fatalf("error: %v", error3)
 	}
 
 	return denvFile
+}
+
+func switchEnvironment(environment string) {
+	cfg := loadConfig()
+
+	currentEnvironment := cfg.Section("current").Key("environment").String()
+	if environment == currentEnvironment {
+		log.Fatalf("Given environment %v is already selected.", environment)
+	}
+
+	if !cfg.Section("environments").HasKey("denv." + environment) {
+		log.Fatalf("Environment %v not configured", environment)
+	}
+
+	cfg.Section("current").Key("environment").SetValue(environment)
+	cfg.SaveTo("denv_config")
+}
+
+func fileExists(filename string) bool {
+	info, err := os.Stat(filename)
+	if os.IsNotExist(err) {
+		return false
+	}
+
+	return !info.IsDir()
 }
