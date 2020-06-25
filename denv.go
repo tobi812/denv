@@ -38,8 +38,6 @@ func main() {
 
 	switchCmd := flag.NewFlagSet("switch", flag.ExitOnError)
 
-
-
 	if len(os.Args) == 1 {
 		man, error := ioutil.ReadFile("docs/man.txt")
 		if error != nil {
@@ -73,6 +71,27 @@ func main() {
 		}
 		args = append(args, "up")
 		args = append(args, "-d")
+
+		execCommand("docker-compose", args...)
+	case "down":
+		denvFile := loadDenvFile("")
+		if len(os.Args) < 3 {
+			fmt.Println("Expected service name.")
+			os.Exit(1)
+		}
+
+		service, definitionError := getDefinition(os.Args[2], denvFile)
+		if definitionError != nil {
+			os.Exit(1)
+		}
+
+		args := []string{}
+
+		for _, file := range service.Files {
+			args = append(args, "-f")
+			args = append(args, file)
+		}
+		args = append(args, "down")
 
 		execCommand("docker-compose", args...)
 	case "add":
@@ -138,7 +157,6 @@ func getDefinition(name string, denvFile DenvFile) (Definition, error) {
 
 	return Definition{}, errors.New(errorMessage)
 }
-
 
 func loadConfig() *ini.File {
 	cfg, err := ini.Load("denv_config")
