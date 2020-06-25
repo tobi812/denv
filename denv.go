@@ -31,14 +31,10 @@ type DenvFile struct {
 }
 
 func main() {
-	upCmd := flag.NewFlagSet("up", flag.ExitOnError)
-
 	addCmd := flag.NewFlagSet("add", flag.ExitOnError)
 	denvPath := addCmd.String("path", "", "path to denv-file")
 
 	switchCmd := flag.NewFlagSet("switch", flag.ExitOnError)
-
-
 
 	if len(os.Args) == 1 {
 		man, error := ioutil.ReadFile("docs/man.txt")
@@ -52,27 +48,14 @@ func main() {
 
 	switch os.Args[1] {
 	case "up":
-		upCmd.Parse(os.Args[2:])
-
-		denvFile := loadDenvFile("")
-		if len(os.Args) < 3 {
-			fmt.Println("Expected service name.")
-			os.Exit(1)
-		}
-
-		service, definitionError := getDefinition(os.Args[2], denvFile)
-		if definitionError != nil {
-			os.Exit(1)
-		}
-
-		args := []string{}
-
-		for _, file := range service.Files {
-			args = append(args, "-f")
-			args = append(args, file)
-		}
+		args := extractArgsFromDenvFile()
 		args = append(args, "up")
 		args = append(args, "-d")
+
+		execCommand("docker-compose", args...)
+	case "down":
+		args := extractArgsFromDenvFile()
+		args = append(args, "down")
 
 		execCommand("docker-compose", args...)
 	case "add":
@@ -139,7 +122,6 @@ func getDefinition(name string, denvFile DenvFile) (Definition, error) {
 	return Definition{}, errors.New(errorMessage)
 }
 
-
 func loadConfig() *ini.File {
 	cfg, err := ini.Load("denv_config")
 	if err != nil {
@@ -191,4 +173,25 @@ func switchEnvironment(environment string) {
 
 	cfg.Section("current").Key("environment").SetValue(environment)
 	cfg.SaveTo("denv_config")
+}
+
+func extractArgsFromDenvFile() []string {
+	denvFile := loadDenvFile("")
+	if len(os.Args) < 3 {
+		fmt.Println("Expected service name.")
+		os.Exit(1)
+	}
+
+	service, definitionError := getDefinition(os.Args[2], denvFile)
+	if definitionError != nil {
+		os.Exit(1)
+	}
+
+	args := []string{}
+
+	for _, file := range service.Files {
+		args = append(args, "-f")
+		args = append(args, file)
+	}
+	return args
 }
