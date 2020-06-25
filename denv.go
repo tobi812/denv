@@ -43,7 +43,6 @@ func main() {
 
 	switch os.Args[1] {
 	case "up":
-
 		upCmd.Parse(os.Args[2:])
 
 		denvFile := loadDenvFile("")
@@ -122,7 +121,7 @@ func getDefinition(name string, denvFile DenvFile) (Definition, error) {
 
 func loadDenvFile(path string) DenvFile {
 
-	if !strings.HasSuffix(path, "/") {
+	if !strings.HasSuffix(path, "/") && path != "" {
 		path = path + "/"
 	}
 
