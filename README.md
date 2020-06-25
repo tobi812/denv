@@ -17,5 +17,5 @@ go install
 4. Compile and run denv
 ```
 go build 
-denv
+./denv
 ```

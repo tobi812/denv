@@ -1,0 +1,7 @@
+[current]
+environment = name
+
+[environments]
+cocoon      = /home/trosenstock/Projects/open-space/denv
+denv.cocoon = /home/trosenstock/Projects/open-space/denv
+
