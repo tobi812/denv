@@ -8,3 +8,4 @@ The commands are:
 
     up: start a service
     down: stop a service
+    add: add new configuration file
