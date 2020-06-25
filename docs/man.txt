@@ -1,0 +1,11 @@
+Denv is a tool to manage and concert multiple docker-compose scripts.
+
+Usage:
+
+    denv <command> [arguments]
+
+The commands are:
+
+    up: start a service
+    down: stop a service
+    add: add new configuration file
