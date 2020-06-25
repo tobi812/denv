@@ -54,14 +54,20 @@ func main() {
 
 	switch os.Args[1] {
 	case "up":
-		args := extractArgsFromDenvFile()
+		if len(os.Args) < 3 {
+			fmt.Println("Expected service name.")
+			os.Exit(1)
+		}
+
+		denvFile := loadDenvFile("")
+		service, definitionError := getDefinition(os.Args[2], denvFile)
+		if definitionError != nil {
+			os.Exit(1)
+		}
+
+		args := extractArgsFromDenvFile(service)
 		args = append(args, "up")
 		args = append(args, "-d")
-
-		execCommand("docker-compose", args...)
-	case "down":
-		args := extractArgsFromDenvFile()
-		args = append(args, "down")
 
 		execCommand("docker-compose", args...)
 
@@ -69,10 +75,30 @@ func main() {
 			containerArgs := []string{}
 			containerArgs = append(containerArgs, "exec")
 			containerArgs = append(containerArgs, command.Container)
-			containerArgs = append(containerArgs, command.Exec)
+
+			for _, execArg := range strings.Split(command.Exec, " ") {
+				containerArgs = append(containerArgs, execArg)
+			}
 
 			execCommand("docker", containerArgs...)
 		}
+
+	case "down":
+		if len(os.Args) < 3 {
+			fmt.Println("Expected service name.")
+			os.Exit(1)
+		}
+
+		denvFile := loadDenvFile("")
+		service, definitionError := getDefinition(os.Args[2], denvFile)
+		if definitionError != nil {
+			os.Exit(1)
+		}
+
+		args := extractArgsFromDenvFile(service)
+		args = append(args, "down")
+
+		execCommand("docker-compose", args...)
 
 	case "add":
 		addCmd.Parse(os.Args[2:])
@@ -119,8 +145,10 @@ func execCommand(name string, args ...string) {
 
 	if err != nil {
 		fmt.Printf(errStr)
+		fmt.Printf(stdout.String())
 	} else {
 		fmt.Printf(outStr)
+		fmt.Printf(stderr.String())
 	}
 }
 
@@ -190,23 +218,13 @@ func switchEnvironment(environment string) {
 	cfg.SaveTo("denv_config")
 }
 
-func extractArgsFromDenvFile() []string {
-	denvFile := loadDenvFile("")
-	if len(os.Args) < 3 {
-		fmt.Println("Expected service name.")
-		os.Exit(1)
-	}
-
-	service, definitionError := getDefinition(os.Args[2], denvFile)
-	if definitionError != nil {
-		os.Exit(1)
-	}
-
+func extractArgsFromDenvFile(service Definition) []string {
 	args := []string{}
 
 	for _, file := range service.Files {
 		args = append(args, "-f")
 		args = append(args, file)
 	}
+
 	return args
 }

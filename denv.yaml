@@ -7,7 +7,7 @@ environment:
         - docker-compose-postgres.yml
       commands:
         - container: postgres
-          exec: postgres -V
+          exec: 'postgres -V'
     - name: 'redis'
       files:
         - docker-compose-redis.yml
