@@ -61,12 +61,14 @@ func main() {
 			os.Exit(1)
 		}
 
-		args := []string{"up"}
+		args := []string{}
 
 		for _, file := range service.Files {
 			args = append(args, "-f")
 			args = append(args, file)
 		}
+		args = append(args, "up")
+		args = append(args, "-d")
 
 		execCommand("docker-compose", args...)
 	case "add":
