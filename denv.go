@@ -31,8 +31,6 @@ type DenvFile struct {
 }
 
 func main() {
-	upCmd := flag.NewFlagSet("up", flag.ExitOnError)
-
 	addCmd := flag.NewFlagSet("add", flag.ExitOnError)
 	denvPath := addCmd.String("path", "", "path to denv-file")
 
@@ -50,8 +48,6 @@ func main() {
 
 	switch os.Args[1] {
 	case "up":
-		upCmd.Parse(os.Args[2:])
-
 		denvFile := loadDenvFile("")
 		if len(os.Args) < 3 {
 			fmt.Println("Expected service name.")
