@@ -37,7 +37,12 @@ func main() {
 	denvPath := addCmd.String("path", "", "path to denv-file")
 
 	if len(os.Args) == 1 {
-		fmt.Println("Print HELP")
+		man, error := ioutil.ReadFile("docs/man.txt")
+		if error != nil {
+			log.Fatal(error)
+		}
+
+		fmt.Print(string(man))
 		os.Exit(1)
 	}
 
@@ -84,7 +89,7 @@ func main() {
 		cfg.SaveTo("denv_config")
 
 	default:
-		fmt.Println("Expected subcommand.")
+		fmt.Println("Unknown command.")
 		os.Exit(1)
 	}
 	// fmt.Printf("--- t:\n%v\n\n", denvFile)
