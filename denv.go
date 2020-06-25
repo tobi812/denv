@@ -192,12 +192,3 @@ func switchEnvironment(environment string) {
 	cfg.Section("current").Key("environment").SetValue(environment)
 	cfg.SaveTo("denv_config")
 }
-
-func fileExists(filename string) bool {
-	info, err := os.Stat(filename)
-	if os.IsNotExist(err) {
-		return false
-	}
-
-	return !info.IsDir()
-}
