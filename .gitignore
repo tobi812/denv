@@ -5,7 +5,7 @@
 *.so
 *.dylib
 
-./denv
+denv
 
 #Visual studio code folder
 .vscode/
