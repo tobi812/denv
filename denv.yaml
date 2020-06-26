@@ -4,7 +4,7 @@ environment:
   definitions:
     - name: 'postgres'
       files:
-        - docker-compose-postgres.yml
+        - ${PROJECT_PATH}/docker-compose-postgres.yml
       commands:
         - container: postgres
           exec: 'postgres -V'
