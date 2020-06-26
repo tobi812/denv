@@ -11,6 +11,8 @@ environment:
     - name: 'redis'
       files:
         - docker-compose-redis.yml
-  boot:
-    - service1
-    - service2
+  bootgroups:
+    - name: 'test'
+      definitions:
+        - 'postgres'
+        - 'redis'
