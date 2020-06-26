@@ -87,6 +87,18 @@ func main() {
 
 		execCommand("docker-compose", args...)
 
+	case "boot":
+		denvFile := loadDenvFile("")
+		serviceList := denvFile.Environment.Definitions
+
+		if len(os.Args) > 2 {
+			serviceList = getDefinitionList(os.Args[2], denvFile)
+		}
+
+		for _, service := range serviceList {
+			startService(service)
+		}
+
 	case "add":
 		addCmd.Parse(os.Args[2:])
 
@@ -104,19 +116,6 @@ func main() {
 
 		cfg.Section("environments").Key("denv." + denvFile.Environment.Name).SetValue(absolutePath)
 		cfg.SaveTo("denv_config")
-
-	case "boot":
-		if len(os.Args) < 3 {
-			fmt.Println("Expected service name.")
-			os.Exit(1)
-		}
-
-		denvFile := loadDenvFile("")
-		serviceList := getDefinitionList(os.Args[2], denvFile)
-
-		for _, service := range serviceList {
-			startService(service)
-		}
 
 	case "switch":
 		if len(os.Args) < 3 {
@@ -185,7 +184,7 @@ func getDefinition(name string, denvFile DenvFile) (Definition, error) {
 
 func getDefinitionList(bootName string, denvFile DenvFile) []Definition {
 	definitionNames := []string{}
-	definitionList  := []Definition{}
+	definitionList := []Definition{}
 
 	for _, bootGroup := range denvFile.Environment.BootGroups {
 		if bootGroup.Name == bootName {
