@@ -10,7 +10,7 @@ import (
 	"os"
 	"os/exec"
 	"strings"
-	"github.com/fatih/color"
+	"gopkg.in/gookit/color.v1"
 	"gopkg.in/ini.v1"
 	"gopkg.in/yaml.v2"
 )
@@ -255,7 +255,7 @@ func loadDenvFile(path string) DenvFile {
 		log.Fatalf("error: %v", error3)
 	}
 
-	green := color.New(color.FgGreen).SprintFunc()
+	green := color.FgGreen.Render
 	fmt.Printf("Environment: [%s]\n", green(denvFile.Environment.Name))
 
 	return denvFile
