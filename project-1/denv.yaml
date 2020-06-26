@@ -1,10 +1,10 @@
 version: v1
 environment: 
-  name: cocoon
+  name: project-1
   definitions:
     - name: 'postgres'
       files:
-        - ${PROJECT_PATH}/docker-compose-postgres.yml
+        - docker-compose-postgres.yml
       commands:
         - container: postgres
           exec: 'postgres -V'

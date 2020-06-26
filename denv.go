@@ -49,11 +49,11 @@ func main() {
 	denvPath := addCmd.String("path", "", "path to denv-file")
 
 	if len(os.Args) == 1 {
-		man, error := ioutil.ReadFile("docs/man.txt")
-		if error != nil {
-			log.Fatal(error)
-		}
-
+//		man, error := ioutil.ReadFile("docs/man.txt")
+//		if error != nil {
+//			log.Fatal(error)
+//		}
+		man := "Denv is a tool to manage and concert multiple docker-compose scripts.\n\nUsage:\n\n    denv <command> [arguments]\n\nCommands:\n    up          start a service\n    down        stop a service\n    boot        start a list of services\n    boot-down   stop a list of services\n    add         add new configuration file\n    switch      switch environment context"
 		fmt.Print(string(man))
 		os.Exit(1)
 	}
@@ -127,7 +127,7 @@ func main() {
 		}
 
 		cfg.Section("environments").Key("denv." + denvFile.Environment.Name).SetValue(absolutePath)
-		cfg.SaveTo("denv_config")
+		cfg.SaveTo(os.Getenv("HOME") + "/.denv_config")
 
 	case "switch":
 		if len(os.Args) < 3 {
@@ -227,7 +227,8 @@ func getDefinitionList(bootName string, denvFile DenvFile) []Definition {
 }
 
 func loadConfig() *ini.File {
-	cfg, err := ini.Load("denv_config")
+	cfg, err := ini.Load(os.Getenv("HOME") + "/.denv_config")
+
 	if err != nil {
 		fmt.Printf("Fail to read file: %v", err)
 		os.Exit(1)
@@ -237,6 +238,11 @@ func loadConfig() *ini.File {
 }
 
 func loadDenvFile(path string) DenvFile {
+	if path == "" {
+		config := loadConfig()
+		currentEnvironment := config.Section("current").Key("environment").String()
+		path = config.Section("Environments").Key("denv." + currentEnvironment).String()
+	}
 
 	if !strings.HasSuffix(path, "/") && path != "" {
 		path = path + "/"
@@ -281,7 +287,7 @@ func switchEnvironment(environment string) {
 	}
 
 	cfg.Section("current").Key("environment").SetValue(environment)
-	cfg.SaveTo("denv_config")
+	cfg.SaveTo(os.Getenv("HOME") + "/.denv_config")
 }
 
 func extractArgsFromDenvFile(service Definition) []string {

@@ -1,0 +1,12 @@
+version: v1
+environment: 
+  name: project-2
+  definitions:
+    - name: 'postgres'
+      files:
+        - docker-compose.yml
+      commands:
+        - container: postgres
+          exec: 'postgres -V'
+
+
