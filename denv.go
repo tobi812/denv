@@ -10,6 +10,8 @@ import (
 	"os"
 	"os/exec"
 	"strings"
+	"time"
+
 	"gopkg.in/gookit/color.v1"
 	"gopkg.in/ini.v1"
 	"gopkg.in/yaml.v2"
@@ -23,8 +25,9 @@ type Command struct {
 type Definition struct {
 	Name     string
 	Files    []string
+	Wait     int
 	Commands []Command
-	path     string
+	Path     string
 }
 
 type Boot struct {
@@ -151,6 +154,11 @@ func startService(service Definition) {
 
 	execCommand("docker-compose", args...)
 
+	if service.Wait > 0 {
+		fmt.Println("Waiting for ", service.Wait, " seconds for ", service.Name)
+		time.Sleep(time.Duration(service.Wait) * time.Second)
+	}
+
 	execServiceCommands(service)
 }
 
@@ -245,7 +253,6 @@ func loadDenvFile(path string) DenvFile {
 	if error2 != nil {
 		log.Fatal(error2)
 	}
-
 
 	data = []byte(os.Expand(string(data), GetenvStrict))
 

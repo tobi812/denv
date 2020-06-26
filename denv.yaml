@@ -8,6 +8,7 @@ environment:
       commands:
         - container: postgres
           exec: 'postgres -V'
+      wait: 5
     - name: 'redis'
       files:
         - docker-compose-redis.yml
