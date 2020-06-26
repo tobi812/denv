@@ -82,10 +82,7 @@ func main() {
 			os.Exit(1)
 		}
 
-		args := extractArgsFromDenvFile(service)
-		args = append(args, "down")
-
-		execCommand("docker-compose", args...)
+		stopService(service)
 
 	case "boot":
 		denvFile := loadDenvFile("")
@@ -97,6 +94,18 @@ func main() {
 
 		for _, service := range serviceList {
 			startService(service)
+		}
+
+	case "boot-down":
+		denvFile := loadDenvFile("")
+		serviceList := denvFile.Environment.Definitions
+
+		if len(os.Args) > 2 {
+			serviceList = getDefinitionList(os.Args[2], denvFile)
+		}
+
+		for _, service := range serviceList {
+			stopService(service)
 		}
 
 	case "add":
@@ -150,6 +159,13 @@ func startService(service Definition) {
 
 		execCommand("docker", containerArgs...)
 	}
+}
+
+func stopService(service Definition) {
+	args := extractArgsFromDenvFile(service)
+	args = append(args, "down")
+
+	execCommand("docker-compose", args...)
 }
 
 func execCommand(name string, args ...string) {
