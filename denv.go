@@ -10,7 +10,7 @@ import (
 	"os"
 	"os/exec"
 	"strings"
-
+	"gopkg.in/gookit/color.v1"
 	"gopkg.in/ini.v1"
 	"gopkg.in/yaml.v2"
 )
@@ -135,6 +135,9 @@ func main() {
 		environment := os.Args[2]
 		switchEnvironment(environment)
 
+	case "config":
+		fmt.Println("Print current config")
+
 	default:
 		fmt.Println("Unknown command.")
 		os.Exit(1)
@@ -148,17 +151,7 @@ func startService(service Definition) {
 
 	execCommand("docker-compose", args...)
 
-	for _, command := range service.Commands {
-		containerArgs := []string{}
-		containerArgs = append(containerArgs, "exec")
-		containerArgs = append(containerArgs, command.Container)
-
-		for _, execArg := range strings.Split(command.Exec, " ") {
-			containerArgs = append(containerArgs, execArg)
-		}
-
-		execCommand("docker", containerArgs...)
-	}
+	execServiceCommands(service)
 }
 
 func stopService(service Definition) {
@@ -253,11 +246,17 @@ func loadDenvFile(path string) DenvFile {
 		log.Fatal(error2)
 	}
 
+
+	data = []byte(os.Expand(string(data), GetenvStrict))
+
 	denvFile := DenvFile{}
-	error3 := yaml.Unmarshal([]byte(data), &denvFile)
+	error3 := yaml.Unmarshal(data, &denvFile)
 	if error3 != nil {
 		log.Fatalf("error: %v", error3)
 	}
+
+	green := color.FgGreen.Render
+	fmt.Printf("Environment: [%s]\n", green(denvFile.Environment.Name))
 
 	return denvFile
 }
@@ -282,9 +281,45 @@ func extractArgsFromDenvFile(service Definition) []string {
 	args := []string{}
 
 	for _, file := range service.Files {
+		if !fileExists(file) {
+			log.Fatalf("docker-compose %s file not found", file)
+		}
+
 		args = append(args, "-f")
 		args = append(args, file)
 	}
 
 	return args
+}
+
+func execServiceCommands(service Definition) {
+	for _, command := range service.Commands {
+		containerArgs := []string{}
+		containerArgs = append(containerArgs, "exec")
+		containerArgs = append(containerArgs, command.Container)
+
+		for _, execArg := range strings.Split(command.Exec, " ") {
+			containerArgs = append(containerArgs, execArg)
+		}
+
+		execCommand("docker", containerArgs...)
+	}
+}
+
+func fileExists(filename string) bool {
+	info, err := os.Stat(filename)
+	if os.IsNotExist(err) {
+		return false
+	}
+
+	return !info.IsDir()
+}
+
+func GetenvStrict(key string) string {
+	value := os.Getenv(key)
+	if value == "" {
+		log.Fatalf("Environment variable $%s, that was defined in denv file, not set!", key)
+	}
+
+	return value
 }

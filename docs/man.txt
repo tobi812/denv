@@ -4,11 +4,10 @@ Usage:
 
     denv <command> [arguments]
 
-The commands are:
-
-    up: start a service
-    down: stop a service
-    boot: start a list of services
-    boot-down: stop a list of services
-    add: add new configuration file
-    switch: switch environment context
+Commands:
+    up          start a service
+    down        stop a service
+    boot        start a list of services
+    boot-down   stop a list of services
+    add         add new configuration file
+    switch      switch environment context
