@@ -2,11 +2,15 @@ version: v1
 environment: 
   name: cocoon
   definitions:
-    - name: 'service1'
+    - name: 'postgres'
       files:
-        - docker-compose.yml
-        - docker-compose.prod.yml
-    - name: 'service2'
+        - docker-compose-postgres.yml
+      commands:
+        - container: postgres
+          exec: 'postgres -V'
+    - name: 'redis'
+      files:
+        - docker-compose-redis.yml
   boot:
     - service1
     - service2

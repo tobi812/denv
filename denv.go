@@ -15,9 +15,15 @@ import (
 	"gopkg.in/yaml.v2"
 )
 
+type Command struct {
+	Container string
+	Exec string
+}
+
 type Definition struct {
 	Name  string
 	Files []string
+	Commands []Command
 	path  string
 }
 
@@ -48,16 +54,52 @@ func main() {
 
 	switch os.Args[1] {
 	case "up":
-		args := extractArgsFromDenvFile()
+		if len(os.Args) < 3 {
+			fmt.Println("Expected service name.")
+			os.Exit(1)
+		}
+
+		denvFile := loadDenvFile("")
+		service, definitionError := getDefinition(os.Args[2], denvFile)
+		if definitionError != nil {
+			os.Exit(1)
+		}
+
+		args := extractArgsFromDenvFile(service)
 		args = append(args, "up")
 		args = append(args, "-d")
 
 		execCommand("docker-compose", args...)
+
+		for _, command := range service.Commands {
+			containerArgs := []string{}
+			containerArgs = append(containerArgs, "exec")
+			containerArgs = append(containerArgs, command.Container)
+
+			for _, execArg := range strings.Split(command.Exec, " ") {
+				containerArgs = append(containerArgs, execArg)
+			}
+
+			execCommand("docker", containerArgs...)
+		}
+
 	case "down":
-		args := extractArgsFromDenvFile()
+		if len(os.Args) < 3 {
+			fmt.Println("Expected service name.")
+			os.Exit(1)
+		}
+
+		denvFile := loadDenvFile("")
+		service, definitionError := getDefinition(os.Args[2], denvFile)
+		if definitionError != nil {
+			os.Exit(1)
+		}
+
+		args := extractArgsFromDenvFile(service)
 		args = append(args, "down")
 
 		execCommand("docker-compose", args...)
+
 	case "add":
 		addCmd.Parse(os.Args[2:])
 
@@ -90,8 +132,6 @@ func main() {
 		fmt.Println("Unknown command.")
 		os.Exit(1)
 	}
-	// fmt.Printf("--- t:\n%v\n\n", denvFile)
-	// fmt.Println("Name: " + denvFile.Environment.Name)
 }
 
 func execCommand(name string, args ...string) {
@@ -102,10 +142,13 @@ func execCommand(name string, args ...string) {
 	err := cmd.Run()
 	outStr, errStr := string(stdout.Bytes()), string(stderr.Bytes())
 
+
 	if err != nil {
 		fmt.Printf(errStr)
+		fmt.Printf(stdout.String())
 	} else {
 		fmt.Printf(outStr)
+		fmt.Printf(stderr.String())
 	}
 }
 
@@ -175,23 +218,13 @@ func switchEnvironment(environment string) {
 	cfg.SaveTo("denv_config")
 }
 
-func extractArgsFromDenvFile() []string {
-	denvFile := loadDenvFile("")
-	if len(os.Args) < 3 {
-		fmt.Println("Expected service name.")
-		os.Exit(1)
-	}
-
-	service, definitionError := getDefinition(os.Args[2], denvFile)
-	if definitionError != nil {
-		os.Exit(1)
-	}
-
+func extractArgsFromDenvFile(service Definition) []string {
 	args := []string{}
 
 	for _, file := range service.Files {
 		args = append(args, "-f")
 		args = append(args, file)
 	}
+
 	return args
 }
