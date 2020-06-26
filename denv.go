@@ -17,14 +17,19 @@ import (
 
 type Command struct {
 	Container string
-	Exec string
+	Exec      string
 }
 
 type Definition struct {
-	Name  string
-	Files []string
+	Name     string
+	Files    []string
 	Commands []Command
-	path  string
+	path     string
+}
+
+type Boot struct {
+	Name        string
+	Definitions []string
 }
 
 type DenvFile struct {
@@ -32,15 +37,13 @@ type DenvFile struct {
 	Environment struct {
 		Name        string
 		Definitions []Definition
-		Boot        []string
+		BootGroups  []Boot
 	}
 }
 
 func main() {
 	addCmd := flag.NewFlagSet("add", flag.ExitOnError)
 	denvPath := addCmd.String("path", "", "path to denv-file")
-
-	switchCmd := flag.NewFlagSet("switch", flag.ExitOnError)
 
 	if len(os.Args) == 1 {
 		man, error := ioutil.ReadFile("docs/man.txt")
@@ -65,23 +68,7 @@ func main() {
 			os.Exit(1)
 		}
 
-		args := extractArgsFromDenvFile(service)
-		args = append(args, "up")
-		args = append(args, "-d")
-
-		execCommand("docker-compose", args...)
-
-		for _, command := range service.Commands {
-			containerArgs := []string{}
-			containerArgs = append(containerArgs, "exec")
-			containerArgs = append(containerArgs, command.Container)
-
-			for _, execArg := range strings.Split(command.Exec, " ") {
-				containerArgs = append(containerArgs, execArg)
-			}
-
-			execCommand("docker", containerArgs...)
-		}
+		startService(service)
 
 	case "down":
 		if len(os.Args) < 3 {
@@ -117,9 +104,21 @@ func main() {
 
 		cfg.Section("environments").Key("denv." + denvFile.Environment.Name).SetValue(absolutePath)
 		cfg.SaveTo("denv_config")
-	case "switch":
-		switchCmd.Parse(os.Args[2:])
 
+	case "boot":
+		if len(os.Args) < 3 {
+			fmt.Println("Expected service name.")
+			os.Exit(1)
+		}
+
+		denvFile := loadDenvFile("")
+		serviceList := getDefinitionList(os.Args[2], denvFile)
+
+		for _, service := range serviceList {
+			startService(service)
+		}
+
+	case "switch":
 		if len(os.Args) < 3 {
 			fmt.Println("Expected environment name.")
 			os.Exit(1)
@@ -134,6 +133,26 @@ func main() {
 	}
 }
 
+func startService(service Definition) {
+	args := extractArgsFromDenvFile(service)
+	args = append(args, "up")
+	args = append(args, "-d")
+
+	execCommand("docker-compose", args...)
+
+	for _, command := range service.Commands {
+		containerArgs := []string{}
+		containerArgs = append(containerArgs, "exec")
+		containerArgs = append(containerArgs, command.Container)
+
+		for _, execArg := range strings.Split(command.Exec, " ") {
+			containerArgs = append(containerArgs, execArg)
+		}
+
+		execCommand("docker", containerArgs...)
+	}
+}
+
 func execCommand(name string, args ...string) {
 	cmd := exec.Command(name, args...)
 	var stdout, stderr bytes.Buffer
@@ -141,7 +160,6 @@ func execCommand(name string, args ...string) {
 	cmd.Stderr = &stderr
 	err := cmd.Run()
 	outStr, errStr := string(stdout.Bytes()), string(stderr.Bytes())
-
 
 	if err != nil {
 		fmt.Printf(errStr)
@@ -163,6 +181,33 @@ func getDefinition(name string, denvFile DenvFile) (Definition, error) {
 	fmt.Println(errorMessage)
 
 	return Definition{}, errors.New(errorMessage)
+}
+
+func getDefinitionList(bootName string, denvFile DenvFile) []Definition {
+	definitionNames := []string{}
+	definitionList  := []Definition{}
+
+	for _, bootGroup := range denvFile.Environment.BootGroups {
+		if bootGroup.Name == bootName {
+			definitionNames = append(definitionNames, bootGroup.Definitions...)
+		}
+	}
+
+	if len(definitionNames) < 1 {
+		fmt.Println("Definition for bootGroup '" + bootName + "' not found!")
+		os.Exit(1)
+	}
+
+	for _, definitionName := range definitionNames {
+		definition, definitionError := getDefinition(definitionName, denvFile)
+
+		if definitionError != nil {
+			os.Exit(1)
+		}
+		definitionList = append(definitionList, definition)
+	}
+
+	return definitionList
 }
 
 func loadConfig() *ini.File {
