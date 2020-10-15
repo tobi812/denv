@@ -11,7 +11,7 @@ import (
 	"os/exec"
 	"strings"
 	"time"
-
+	"github.com/spf13/cobra"
 	"gopkg.in/gookit/color.v1"
 	"gopkg.in/ini.v1"
 	"gopkg.in/yaml.v2"
@@ -251,42 +251,6 @@ func loadConfig() *ini.File {
 	return cfg
 }
 
-func loadDenvFile(path string) DenvFile {
-	if path == "" {
-		config := loadConfig()
-		currentEnvironment := config.Section("current").Key("environment").String()
-		path = config.Section("Environments").Key("denv." + currentEnvironment).String()
-	}
-
-	if !strings.HasSuffix(path, "/") && path != "" {
-		path = path + "/"
-	}
-
-	file, error1 := os.Open(path + "denv.yaml")
-	if error1 != nil {
-		log.Fatal(error1)
-	}
-
-	defer file.Close()
-
-	data, error2 := ioutil.ReadAll(file)
-	if error2 != nil {
-		log.Fatal(error2)
-	}
-
-	data = []byte(os.Expand(string(data), GetenvStrict))
-
-	denvFile := DenvFile{}
-	error3 := yaml.Unmarshal(data, &denvFile)
-	if error3 != nil {
-		log.Fatalf("error: %v", error3)
-	}
-
-	green := color.FgGreen.Render
-	fmt.Printf("Environment: [%s]\n", green(denvFile.Environment.Name))
-
-	return denvFile
-}
 
 func switchEnvironment(environment string) {
 	cfg := loadConfig()

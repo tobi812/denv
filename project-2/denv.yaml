@@ -6,5 +6,5 @@ environment:
       files:
         - docker-compose.yml
       commands:
-        - container: postgres
+        - container: postgres-2
           exec: 'postgres -V'
