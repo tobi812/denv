@@ -8,5 +8,3 @@ environment:
       commands:
         - container: postgres
           exec: 'postgres -V'
-
-

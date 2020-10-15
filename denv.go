@@ -45,17 +45,31 @@ type DenvFile struct {
 }
 
 func main() {
+	help := flag.Bool("help", false, "help flag")
+	helpShort := flag.Bool("h", false, "short help flag")
+
+	version := flag.Bool("version", false, "version flag: prints the current version")
+	versionShort := flag.Bool("v", false, "version flag: prints the current version")
+
+	flag.Parse()
 	addCmd := flag.NewFlagSet("add", flag.ExitOnError)
 	denvPath := addCmd.String("path", "", "path to denv-file")
 
-	if len(os.Args) == 1 {
-//		man, error := ioutil.ReadFile("docs/man.txt")
-//		if error != nil {
-//			log.Fatal(error)
-//		}
-		man := "Denv is a tool to manage and concert multiple docker-compose scripts.\n\nUsage:\n\n    denv <command> [arguments]\n\nCommands:\n    up          start a service\n    down        stop a service\n    boot        start a list of services\n    boot-down   stop a list of services\n    add         add new configuration file\n    switch      switch environment context"
+	if len(os.Args) == 1 || *help  || *helpShort {
+		man, err := ioutil.ReadFile("docs/man.txt")
+		if err != nil {
+			log.Fatal(err)
+		}
+
 		fmt.Print(string(man))
-		os.Exit(1)
+		os.Exit(0)
+	}
+
+	if *version || *versionShort {
+		version := "1.0.0"
+		build := "234a2349"
+		fmt.Println("Denv version", version, ", build", build)
+		os.Exit(0)
 	}
 
 	switch os.Args[1] {

@@ -4,6 +4,9 @@ Usage:
 
     denv <command> [arguments]
 
+
+Options
+
 Commands:
     up          start a service
     down        stop a service
