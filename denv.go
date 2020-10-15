@@ -45,17 +45,31 @@ type DenvFile struct {
 }
 
 func main() {
+	help := flag.Bool("help", false, "help flag")
+	helpShort := flag.Bool("h", false, "short help flag")
+
+	version := flag.Bool("version", false, "version flag: prints the current version")
+	versionShort := flag.Bool("v", false, "version flag: prints the current version")
+
+	flag.Parse()
 	addCmd := flag.NewFlagSet("add", flag.ExitOnError)
 	denvPath := addCmd.String("path", "", "path to denv-file")
 
-	if len(os.Args) == 1 {
-		man, error := ioutil.ReadFile("docs/man.txt")
-		if error != nil {
-			log.Fatal(error)
+	if len(os.Args) == 1 || *help  || *helpShort {
+		man, err := ioutil.ReadFile("docs/man.txt")
+		if err != nil {
+			log.Fatal(err)
 		}
 
 		fmt.Print(string(man))
-		os.Exit(1)
+		os.Exit(0)
+	}
+
+	if *version || *versionShort {
+		version := "1.0.0"
+		build := "234a2349"
+		fmt.Println("Denv version", version, ", build", build)
+		os.Exit(0)
 	}
 
 	switch os.Args[1] {
@@ -127,7 +141,7 @@ func main() {
 		}
 
 		cfg.Section("environments").Key("denv." + denvFile.Environment.Name).SetValue(absolutePath)
-		cfg.SaveTo("denv_config")
+		cfg.SaveTo(os.Getenv("HOME") + "/.denv_config")
 
 	case "switch":
 		if len(os.Args) < 3 {
@@ -227,7 +241,8 @@ func getDefinitionList(bootName string, denvFile DenvFile) []Definition {
 }
 
 func loadConfig() *ini.File {
-	cfg, err := ini.Load("denv_config")
+	cfg, err := ini.Load(os.Getenv("HOME") + "/.denv_config")
+
 	if err != nil {
 		fmt.Printf("Fail to read file: %v", err)
 		os.Exit(1)
@@ -237,6 +252,11 @@ func loadConfig() *ini.File {
 }
 
 func loadDenvFile(path string) DenvFile {
+	if path == "" {
+		config := loadConfig()
+		currentEnvironment := config.Section("current").Key("environment").String()
+		path = config.Section("Environments").Key("denv." + currentEnvironment).String()
+	}
 
 	if !strings.HasSuffix(path, "/") && path != "" {
 		path = path + "/"
@@ -281,7 +301,7 @@ func switchEnvironment(environment string) {
 	}
 
 	cfg.Section("current").Key("environment").SetValue(environment)
-	cfg.SaveTo("denv_config")
+	cfg.SaveTo(os.Getenv("HOME") + "/.denv_config")
 }
 
 func extractArgsFromDenvFile(service Definition) []string {
