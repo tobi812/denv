@@ -1,5 +1,5 @@
 /*
-Copyright © 2020 NAME HERE <EMAIL ADDRESS>
+Copyright © 2020 NAME HERE tobias.rosenstock@project-a.com
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -19,6 +19,7 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 */
+
 package cmd
 
 import (
@@ -63,17 +64,17 @@ func init() {
 	// Cobra supports persistent flags, which, if defined here,
 	// will be global for your application.
 
-	rootCmd.PersistentFlags().StringVar(&cfgFile, "config", "", "config file (default is $HOME/.denv.yaml)")
+	rootCmd.PersistentFlags().StringVar(&cfgFile, "printConfig", "", "printConfig file (default is $HOME/.denv.yaml)")
 
 	// Cobra also supports local flags, which will only run
 	// when this action is called directly.
 	rootCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
 }
 
-// initConfig reads in config file and ENV variables if set.
+// initConfig reads in printConfig file and ENV variables if set.
 func initConfig() {
 	if cfgFile != "" {
-		// Use config file from the flag.
+		// Use printConfig file from the flag.
 		viper.SetConfigFile(cfgFile)
 	} else {
 		// Find home directory.
@@ -83,7 +84,7 @@ func initConfig() {
 			os.Exit(1)
 		}
 
-		// Search config in home directory with name ".denv" (without extension).
+		// Search printConfig in home directory with name ".denv" (without extension).
 		viper.AddConfigPath(home)
 		viper.SetConfigType("ini")
 		viper.SetConfigName(".denv_config")
@@ -92,9 +93,9 @@ func initConfig() {
 	viper.AutomaticEnv() // read in environment variables that match
 
 	err := viper.ReadInConfig()
-	// If a config file is found, read it in.
+	// If a printConfig file is found, read it in.
 	if err != nil {
-		panic(fmt.Errorf("Fatal error config file: %s \n", err))
+		panic(fmt.Errorf("Fatal error printConfig file: %s \n", err))
 	}
 }
 
