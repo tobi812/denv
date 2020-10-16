@@ -37,7 +37,6 @@ var switchCmd = &cobra.Command{
 		return nil
 	},
 	Run: func(cmd *cobra.Command, args []string) {
-		fmt.Println("switch called")
 		environment := args[0]
 		switchEnvironment(environment)
 	},
@@ -67,7 +66,11 @@ func switchEnvironment(environment string) {
 	}
 
 	cfg.Section("current").Key("environment").SetValue(environment)
-	cfg.SaveTo(os.Getenv("HOME") + "/.denv_config")
+	err := cfg.SaveTo(os.Getenv("HOME") + "/.denv_config")
+	if err != nil {
+		fmt.Printf("Failed to write denv file: %v", err)
+		os.Exit(1)
+	}
 }
 
 func init() {

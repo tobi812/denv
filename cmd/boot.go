@@ -16,7 +16,6 @@ limitations under the License.
 package cmd
 
 import (
-	"os"
 	"../utils"
 	"github.com/spf13/cobra"
 )
@@ -26,19 +25,23 @@ var bootCmd = &cobra.Command{
 	Use:   "boot",
 	Short: "Boot set of services.",
 	Run: func(cmd *cobra.Command, args []string) {
-		denvFile := utils.LoadDenvFile("")
-		serviceList := denvFile.Environment.Definitions
-
-		if len(os.Args) > 2 {
-			serviceList = utils.GetDefinitionList(os.Args[2], denvFile)
-		}
-
-		for _, service := range serviceList {
-			utils.StartService(service)
-		}
+		boot(cmd, args)
 	},
 }
 
 func init() {
 	rootCmd.AddCommand(bootCmd)
+}
+
+func boot(cmd *cobra.Command, args []string)  {
+	denvFile := utils.LoadDenvFile("")
+	serviceList := denvFile.Environment.Definitions
+
+	if len(args[0]) > 0 {
+		serviceList = utils.GetDefinitionList(args[0], denvFile)
+	}
+
+	for _, service := range serviceList {
+		utils.StartService(service)
+	}
 }
