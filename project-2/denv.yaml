@@ -6,5 +6,15 @@ environment:
       files:
         - docker-compose.yml
       commands:
-        - container: postgres
+        - container: postgres-2
           exec: 'postgres -V'
+    - name: 'redis'
+      files:
+        - docker-compose.yml
+  bootgroups:
+    - name: 'test'
+      definitions:
+        - 'postgres'
+    - name: 'cool'
+      definitions:
+        - 'redis'
